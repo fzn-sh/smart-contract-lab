@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
 
-import {Test,console2} from "forge-std/Test.sol";
-import {IERC20, ISwapRouter, TokenSwapper} from "./TokenSwapper.sol";
+import { Test, console2 } from "forge-std/Test.sol";
+import { IERC20, ISwapRouter, TokenSwapper } from "./TokenSwapper.sol";
 
 contract TokenSwapperTest is Test {
     TokenSwapper swapper;
@@ -14,7 +14,7 @@ contract TokenSwapperTest is Test {
     address user = address(0x123);
 
     function setUp() public {
-        vm.createSelectFork("https://mainnet.infura.io/v3/018e3e4bc15540f4b221a5054d7403c8", 19000000);
+        vm.createSelectFork("https://mainnet.infura.io/v3/018e3e4bc15540f4b221a5054d7403c8", 19_000_000);
 
         swapper = new TokenSwapper(UNISWAP_V3_ROUTER);
     }
@@ -25,17 +25,11 @@ contract TokenSwapperTest is Test {
         uint256 expectedOut = 0.3 ether;
 
         // Mock transferFrom DAI
-        vm.mockCall(
-            DAI,
-            abi.encodeWithSelector(IERC20.transferFrom.selector),
-            abi.encode(true)
-        );
+        vm.mockCall(DAI, abi.encodeWithSelector(IERC20.transferFrom.selector), abi.encode(true));
 
         // Mock executed Swap Uniswap V3 Router
         vm.mockCall(
-            UNISWAP_V3_ROUTER,
-            abi.encodeWithSelector(ISwapRouter.exactInputSingle.selector),
-            abi.encode(expectedOut)
+            UNISWAP_V3_ROUTER, abi.encodeWithSelector(ISwapRouter.exactInputSingle.selector), abi.encode(expectedOut)
         );
 
         vm.prank(user);
@@ -57,16 +51,12 @@ contract TokenSwapperTest is Test {
 
         // executed swap on liquidity pool UNISWAP V3 MAINNET
         uint256 amountOut = swapper.swapDAIForWETH(amountIn, 0);
-        
+
         // log swap
         console2.log("Total WETH(wei):", amountOut);
         uint256 integerPart = amountOut / 1e18;
         uint256 decimalPart = (amountOut % 1e18) / 1e16;
-        string memory formattedWETH = string.concat(
-            vm.toString(integerPart),
-            ".",
-            vm.toString(decimalPart)
-        );
+        string memory formattedWETH = string.concat(vm.toString(integerPart), ".", vm.toString(decimalPart));
         console2.log("Total WETh(Ether):", formattedWETH);
 
         vm.stopPrank();
@@ -74,5 +64,4 @@ contract TokenSwapperTest is Test {
         assertGt(amountOut, 0);
         assertEq(IERC20(WETH).balanceOf(user), amountOut);
     }
-
-}   
+}
