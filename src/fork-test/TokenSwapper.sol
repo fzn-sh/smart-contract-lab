@@ -35,7 +35,6 @@ contract TokenSwapper {
 
     function swapDAIForWETH(uint256 amountIn, uint256 minAmountOut) external returns (uint256 amountOut) {
         IERC20(DAI).transferFrom(msg.sender, address(this), amountIn);
-        IERC20(DAI).approve(address(swapRouter), amountIn);
 
         // EXAMPLE: BUG FORGET TO GIVE ALLOWANCE
         IERC20(DAI).approve(address(swapRouter), amountIn);
