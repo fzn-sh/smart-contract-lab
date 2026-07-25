@@ -30,9 +30,13 @@ contract SampleLendingTest is Test {
         vm.stopPrank();
     }
 
-    function test_FuzzRepayment(uint256 principal, uint256 rate, uint256 time) public {
+    function test_FuzzRepayment(
+        uint256 principal,
+        uint256 rate,
+        uint256 time
+    ) public {
         principal = bound(principal, 1, 1e36);
-        rate = bound(rate, 10, 100000);
+        rate = bound(rate, 10, 100_000);
         time = bound(time, 1 seconds, 365 days);
 
         (uint256 interest, uint256 fees) = protocol.calculateInterest(principal, rate, time);
