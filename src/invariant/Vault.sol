@@ -11,12 +11,14 @@ contract Vault {
         totalDeposits += msg.value;
     }
 
-    function withdraw(uint256 amount) public {
+    function withdraw(
+        uint256 amount
+    ) public {
         require(balanceOf[msg.sender] > 0, "Insufficient balance");
         balanceOf[msg.sender] -= amount;
         totalDeposits -= amount;
 
-        (bool success, ) = msg.sender.call{value: amount}("");
+        (bool success,) = msg.sender.call{ value: amount }("");
         require(success, "Transfer failed");
     }
 }

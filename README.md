@@ -1,66 +1,45 @@
-## Foundry
+# Smart Contract Lab
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+A collection of Solidity exercises and experiments built with [Foundry](https://book.getfoundry.sh/).
 
-Foundry consists of:
+## Project structure
 
-- **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
-- **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
-- **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
-- **Chisel**: Fast, utilitarian, and verbose solidity REPL.
-
-## Documentation
-
-https://book.getfoundry.sh/
-
-## Usage
-
-### Build
-
-```shell
-$ forge build
+```text
+src/
+├── basics/       # Solidity fundamentals
+├── handbook/     # Implementation examples and integration tests
+├── invariant/    # Invariant testing
+├── fuzz/         # Fuzz testing
+├── fork/         # Fork testing
+└── *.sol         # General contract examples
+test/             # General contract tests
+script/           # Deployment scripts
+lib/              # Foundry dependencies
 ```
 
-### Test
+## Quick start
 
 ```shell
-$ forge test
+forge build
+forge test
+forge fmt --check
 ```
 
-### Format
+To run a specific test:
 
 ```shell
-$ forge fmt
+forge test --match-path test/MinimalERC20.t.sol
 ```
 
-### Gas Snapshots
+## Local deployment
+
+Start a local node with `anvil`, then deploy the example token:
 
 ```shell
-$ forge snapshot
+forge script script/MinimalERC20.s.sol:MinimalERC20_Deploy \
+  --rpc-url <your_rpc_url> \
+  --private-key <your_private_key> \
+  --broadcast
 ```
 
-### Anvil
-
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```
+Other available tools include `cast`, `anvil`, and `chisel`.
