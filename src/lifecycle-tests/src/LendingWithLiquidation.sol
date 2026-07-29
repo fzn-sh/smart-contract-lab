@@ -17,14 +17,12 @@ abstract contract AdvancedLending {
     }
 
     function deposit(uint256 amount) external {
-        require(deposits[msg.sender]  > 0, "Deposit amount 0");
         require(token.transferFrom(msg.sender, address(this), amount), "Transfer failed");
         deposits[msg.sender] += amount;
         totalDeposits += amount;
     }
 
     function withdraw(uint256 amount) external {
-        require(deposits[msg.sender]  > 0, "Withdraw amount 0");
         require(deposits[msg.sender] >= amount, "Insufficient Deposit");
         deposits[msg.sender] -= amount;
         totalDeposits -= amount;
@@ -33,7 +31,6 @@ abstract contract AdvancedLending {
 
     function borrow(uint256 amount) external virtual;
     function repay(uint256 amount) external {
-        require(deposits[msg.sender]  > 0, "Repay amount 0");
         require(borrows[msg.sender] >= amount, "Repay exceeds debt");
         require(token.transferFrom(msg.sender, address(this), amount), "Transfer failed");
         borrows[msg.sender] -= amount;
@@ -70,25 +67,35 @@ contract LendingWithLiquidation is AdvancedLending {
         uint256 borrowerDebt = borrows[borrower];
         if (borrowerDebt == 0) revert NoDebtToLiquidate();
 
-        uint256 collateralValue = (deposits[borrower] * price * COLLATERAL_FACTOR) / 1000;
-        if (borrowerDebt * 1000 <= collateralValue * LIQUIDATION_THRESHOLD) revert PositionNotLiquidatable();
+        // Total value of user collateral based on current price (USD)
+        uint256 collateralValueUSD = (deposits[borrower] * price) / 1e18;
 
+        // Maximum debt threshold before position is liquidated (85% of collateral value)
+        uint256 maxAllowedDebt = (collateralValueUSD * LIQUIDATION_THRESHOLD) / 1000;
+
+        if (borrowerDebt <= maxAllowedDebt) revert PositionNotLiquidatable();
+
+        // Limit on the amount of debt that can be liquidated in one transaction
         uint256 maxLiquidation = (borrowerDebt * LIQUIDATION_THRESHOLD) / 1000;
         uint256 actualLiquidation = amount > maxLiquidation ? maxLiquidation : amount;
 
-        uint256 collateralToLiquidate = (actualLiquidation * 1e18 * 1000) / (price * COLLATERAL_FACTOR);
+        // Calculate the amount of collateral that the liquidator is entitled to receive (payable / Token price) + 5 bonuses%
+        uint256 collateralToLiquidate = (actualLiquidation * 1e18) / price;
         uint256 liquidationBonus = (collateralToLiquidate * LIQUIDATION_BONUS) / 1000;
         uint256 totalCollateralToLiquidator = collateralToLiquidate + liquidationBonus;
 
         if (deposits[borrower] < totalCollateralToLiquidator) revert InsufficientCollateral();
-        
-        if (!token.transferFrom(msg.sender, address(this), amount)) revert TransferFailed();
 
+        // Transfer of debt tokens from the liquidator to the protocol
+        if (!token.transferFrom(msg.sender, address(this), actualLiquidation)) revert TransferFailed();
+
+        // Update state internal
         borrows[borrower] -= actualLiquidation;
         totalBorrows -= actualLiquidation;
         deposits[borrower] -= totalCollateralToLiquidator;
         totalDeposits -= totalCollateralToLiquidator;
 
+        // Transfer of funds + bonuses to the liquidator
         if (!token.transfer(msg.sender, totalCollateralToLiquidator)) revert TransferFailed();
     }
 }
