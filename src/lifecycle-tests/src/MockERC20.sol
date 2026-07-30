@@ -21,14 +21,14 @@ contract MockERC20 {
     }
 
     function transfer(address to, uint256 amount) external returns (bool) {
-        require(balanceOf[msg.sender] > amount, "Balance too low");
+        require(balanceOf[msg.sender] >= amount, "Balance too low");
         balanceOf[msg.sender] -= amount;
         balanceOf[to] += amount;
         return true;
     }
 
     function transferFrom(address from, address to, uint256 amount) external returns (bool) {
-        require(balanceOf[from] > amount, "Balance too low");
+        require(balanceOf[from] >= amount, "Balance too low");
         require(allowance[from][msg.sender] >= amount, "Allowance too low");
         allowance[from][msg.sender] -= amount;
         balanceOf[from] -= amount;

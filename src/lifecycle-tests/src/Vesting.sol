@@ -19,7 +19,7 @@ contract Vesting {
         Initialized,
         Funded,
         Vesting,
-        Compleated
+        Completed
     }
 
     error InvalidState(VestingState current, VestingState required);
@@ -95,7 +95,7 @@ contract Vesting {
     }
 
     function vestedAmount() public view returns (uint256) {
-        if (state != VestingState.Vesting && state != VestingState.Compleated) {
+        if (state != VestingState.Vesting && state != VestingState.Completed) {
             return 0;
         }
 
@@ -127,7 +127,7 @@ contract Vesting {
         emit TokenReleased(claimable);
 
         if (releasedAmount == totalAmount) {
-            state = VestingState.Compleated;
+            state = VestingState.Completed;
             emit VestingCompleted();
         }
     }

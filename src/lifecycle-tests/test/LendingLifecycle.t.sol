@@ -23,6 +23,7 @@ contract LendingLifecycleTest is Test {
     }
 
     function test_LendingLifecycle() public {
+        // User deposits tokens
         vm.startPrank(user);
         token.approve(address(lending), 1000 ether);
         lending.deposit(1000 ether);
@@ -31,17 +32,20 @@ contract LendingLifecycleTest is Test {
         assertEq(lending.deposits(user), 1000 ether);
         assertEq(lending.totalDeposits(), 1000 ether);
 
+        // User borrows against collateral
         vm.prank(user);
         lending.borrow(700 ether);
         
         assertEq(lending.borrows(user), 700 ether);
         assertEq(lending.totalBorrows(), 700 ether);
 
+        // Attempt to borrow more than allowed
         vm.expectRevert("Exceeds borrow limit");
         vm.startPrank(user);
         lending.borrow(150 ether);
         vm.stopPrank();
 
+        // Partial repayment
         vm.startPrank(user);
         token.approve(address(lending), 200 ether);
         lending.repay(200 ether);
@@ -50,18 +54,21 @@ contract LendingLifecycleTest is Test {
         assertEq(lending.borrows(user), 500 ether);
         assertEq(lending.totalBorrows(), 500 ether);
 
+        // Withdraw some funds
         vm.prank(user);
         lending.withdraw(100 ether);
 
         assertEq(lending.deposits(user), 900 ether);
         assertEq(lending.totalDeposits(), 900  ether);
 
+        // Set up for liquidation
         vm.prank(user);
         lending.borrow(200 ether);
 
         assertEq(lending.borrows(user), 700 ether);
         lending.setPrice(0.8 ether); // 20% price drop
 
+        // Price drop, making the position liquidatable
         uint256 liquidatorBalanceBefore = token.balanceOf(liquidator);
         vm.startPrank(liquidator);
         token.approve(address(lending), 300 ether);
@@ -73,6 +80,7 @@ contract LendingLifecycleTest is Test {
         assertLt(lending.deposits(user), 900 ether);
         assertGt(liquidatorBalanceAfter, liquidatorBalanceBefore);
         
+        // Liquidator attempts to liquidate
         uint256 remainingDebt = lending.borrows(user);
         vm.startPrank(user);
         token.approve(address(lending), remainingDebt);
